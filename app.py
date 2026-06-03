@@ -335,158 +335,195 @@ def predict_image(image):
 
         top = ranked[0]
 
-        # Grad-CAM from Custom CNN (best Synthetic model)
-        heatmap  = generate_saliency(custom_cnn, img_batch_c)
-        overlaid = overlay_heatmap(img_array_c, heatmap)
+        # ── Grad-CAM for BOTH best models ───────────────────
+        # Custom CNN — Synthetic domain
+        heatmap_cnn  = generate_saliency(custom_cnn, img_batch_c)
+        overlaid_cnn = overlay_heatmap(img_array_c, heatmap_cnn)
 
-        # ── Visualisation ────────────────────────────────────
-        fig = plt.figure(figsize=(20, 12), facecolor='#080810')
-        gs  = fig.add_gridspec(
-            3, 4,
-            left=0.04, right=0.96,
-            top=0.92,  bottom=0.05,
-            hspace=0.5, wspace=0.3
-        )
+        # ResNet50V2 — Photographic domain
+        heatmap_rn   = generate_saliency(rw_resnet_model, img_batch_r)
+        overlaid_rn  = overlay_heatmap(img_array_r, heatmap_rn)
 
-        ax_orig = fig.add_subplot(gs[0, 0])
-        ax_heat = fig.add_subplot(gs[0, 1])
-        ax_over = fig.add_subplot(gs[0, 2])
-        ax_bar  = fig.add_subplot(gs[0, 3])
-        ax_m1   = fig.add_subplot(gs[1, 0])
-        ax_m2   = fig.add_subplot(gs[1, 1])
-        ax_m3   = fig.add_subplot(gs[1, 2])
-        ax_m4   = fig.add_subplot(gs[1, 3])
-        ax_m5   = fig.add_subplot(gs[2, 0])
-        ax_m6   = fig.add_subplot(gs[2, 1])
-        ax_rank = fig.add_subplot(gs[2, 2:])
+        # ── Build Visualization ──────────────────────────────
+# ── Row 1: Heatmaps ──────────────────────────────────
+        fig1, axes1 = plt.subplots(1, 5, figsize=(24, 5),
+                                   facecolor='#080810')
+        fig1.suptitle('HEATMAP & OVERLAY ANALYSIS',
+                      color='#e0e0ff', fontsize=13,
+                      fontfamily='monospace', fontweight='bold')
 
-        # Header
-        fig.text(0.5, 0.97,
-                 '🔬  FORENSIC IMAGE ANALYSIS  —  6 MODEL REPORT',
-                 ha='center', fontsize=18, fontweight='bold',
-                 color='#e0e0ff', fontfamily='monospace')
-        fig.text(0.5, 0.94,
-                 'No single verdict issued  •  '
-                 'Ranked by Accuracy × Confidence  •  '
-                 'Interpretation left to user',
-                 ha='center', fontsize=9,
-                 color='#555566', fontfamily='monospace')
+        # 1. Original Image
+        axes1[0].imshow(img_array_c)
+        axes1[0].set_title('ORIGINAL IMAGE',
+                           color='#aaaacc', fontsize=9,
+                           fontfamily='monospace', pad=8)
+        axes1[0].axis('off')
 
-        # Original image
-        ax_orig.imshow(img_array_c)
-        ax_orig.set_title('ORIGINAL IMAGE', color='#aaaacc',
-                          fontsize=9, fontfamily='monospace',
-                          fontweight='bold', pad=8)
-        ax_orig.axis('off')
+        # 2. Custom CNN Activation Map
+        axes1[1].imshow(heatmap_cnn, cmap='inferno')
+        axes1[1].set_title('ACTIVATION MAP\n(Custom CNN — Synthetic)',
+                           color='#aaaacc', fontsize=9,
+                           fontfamily='monospace', pad=8)
+        axes1[1].axis('off')
 
-        # Heatmap
-        ax_heat.imshow(heatmap, cmap='inferno')
-        ax_heat.set_title('ACTIVATION MAP\n(Custom CNN — Synthetic)',
-                          color='#aaaacc', fontsize=9,
-                          fontfamily='monospace',
-                          fontweight='bold', pad=8)
-        ax_heat.axis('off')
+        # 3. ResNet50V2 Activation Map
+        axes1[2].imshow(heatmap_rn, cmap='inferno')
+        axes1[2].set_title('ACTIVATION MAP\n(ResNet50V2 — Photographic)',
+                           color='#aaaacc', fontsize=9,
+                           fontfamily='monospace', pad=8)
+        axes1[2].axis('off')
 
-        # Overlay
-        ax_over.imshow(overlaid)
-        ax_over.set_title('GRADIENT OVERLAY\n(Custom CNN — Synthetic)',
-                          color='#aaaacc', fontsize=9,
-                          fontfamily='monospace',
-                          fontweight='bold', pad=8)
-        ax_over.axis('off')
+        # 4. Custom CNN Gradient Overlay
+        axes1[3].imshow(overlaid_cnn)
+        axes1[3].set_title('GRADIENT OVERLAY\n(Custom CNN — Synthetic)',
+                           color='#aaaacc', fontsize=9,
+                           fontfamily='monospace', pad=8)
+        axes1[3].axis('off')
 
-        # Bar chart
-        real_pcts = [m['pred'] * 100 for m in all_models]
-        bar_cols  = [m['color']       for m in all_models]
+        # 5. ResNet50V2 Gradient Overlay  ←←← NEW
+        axes1[4].imshow(overlaid_rn)
+        axes1[4].set_title('GRADIENT OVERLAY\n(ResNet50V2 — Photographic)',
+                           color='#aaaacc', fontsize=9,
+                           fontfamily='monospace', pad=8)
+        axes1[4].axis('off')
 
-        ax_bar.set_facecolor('#0d0d1a')
-        bars = ax_bar.bar(
-            range(6), real_pcts,
-            color=bar_cols, width=0.6,
-            edgecolor='#222233', linewidth=1
-        )
-        ax_bar.axhline(50, color='#555566',
-                       linewidth=1, linestyle='--', alpha=0.7)
-        ax_bar.set_xticks(range(6))
-        ax_bar.set_xticklabels(
-            ['CNN\n(SYN)', 'R50\n(SYN)', 'VGG\n(SYN)',
-             'MNV2\n(SYN)', 'R50V2\n(PHO)', 'MNV2\n(PHO)'],
-            fontsize=7, color='#666677'
-        )
-        for bar, val in zip(bars, real_pcts):
-            ax_bar.text(
-                bar.get_x() + bar.get_width() / 2,
-                val + 1.5, f'{val:.0f}%',
-                ha='center', va='bottom',
-                color='white', fontsize=7,
-                fontfamily='monospace', fontweight='bold'
-            )
-        ax_bar.set_ylim(0, 115)
-        ax_bar.set_ylabel('P(REAL) %', color='#666677',
-                          fontsize=8, fontfamily='monospace')
-        ax_bar.set_title('ALL MODELS P(REAL)', color='#aaaacc',
-                         fontsize=9, fontfamily='monospace',
-                         fontweight='bold', pad=8)
-        ax_bar.tick_params(colors='#666677', labelsize=7)
-        for s in ax_bar.spines.values():
-            s.set_edgecolor('#222233')
+        plt.tight_layout()
+        buf1 = io.BytesIO()
+        plt.savefig(buf1, format='png', dpi=150,
+                    bbox_inches='tight', facecolor='#080810')
+        buf1.seek(0)
+        img_heatmaps = Image.open(buf1).copy()
+        plt.close()
 
-        # Gauge cards
-        def draw_gauge(ax, name, domain, score, color, acc):
+         # ── Row 2: Gauge Dials ───────────────────────────────
+        fig2, gauge_axes = plt.subplots(1, 6, figsize=(24, 5),
+                                        facecolor='#080810')
+        fig2.suptitle('INDIVIDUAL MODEL GAUGES',
+                      color='#e0e0ff', fontsize=13,
+                      fontfamily='monospace', fontweight='bold')
+
+        def draw_gauge(ax, name, domain, score, acc):
             ax.set_facecolor('#0d0d1a')
             ax.set_xlim(0, 1)
             ax.set_ylim(0, 1)
             ax.axis('off')
 
-            theta     = np.linspace(np.pi, 0, 100)
-            r, cx, cy = 0.33, 0.5, 0.40
+            # ── Smart Color & Verdict Logic ─────────────────────
+            distance_from_50 = abs(score - 50)
+            if distance_from_50 < 15:
+                gauge_color = '#888899'   # Grey - Uncertain
+                verdict = "UNSURE"
+            elif score > 50:
+                gauge_color = '#00e5a0'   # Green - REAL
+                verdict = "REAL"
+            else:
+                gauge_color = '#ff4d6d'   # Red - AI
+                verdict = "AI"
 
-            ax.plot(cx + r * np.cos(theta),
-                    cy + r * np.sin(theta),
-                    color='#222233', linewidth=9,
+            # Background arc
+            theta     = np.linspace(np.pi, 0, 100)
+            r, cx, cy = 0.35, 0.5, 0.42
+            ax.plot(cx + r*np.cos(theta), cy + r*np.sin(theta),
+                    color='#222233', linewidth=11,
                     solid_capstyle='round', zorder=1)
 
+            # Filled arc
             fill_end   = np.pi - (np.pi * score / 100)
             theta_fill = np.linspace(np.pi, fill_end, 100)
-            ax.plot(cx + r * np.cos(theta_fill),
-                    cy + r * np.sin(theta_fill),
-                    color=color, linewidth=9,
+            ax.plot(cx + r*np.cos(theta_fill),
+                    cy + r*np.sin(theta_fill),
+                    color=gauge_color, linewidth=11,
                     solid_capstyle='round', zorder=2)
 
-            verdict = "REAL" if score > 50 else "AI"
+            # Verdict text
             ax.text(cx, cy - 0.02, verdict,
                     ha='center', va='center',
-                    fontsize=13, fontweight='bold',
-                    color=color, fontfamily='monospace', zorder=3)
-            ax.text(cx, cy - 0.16, f'{score:.1f}%',
-                    ha='center', va='center',
-                    fontsize=9, color='#aaaacc',
+                    fontsize=16, fontweight='bold',
+                    color=gauge_color,
                     fontfamily='monospace', zorder=3)
+
+            # Score percentage
+            ax.text(cx, cy - 0.18, f'{score:.1f}%',
+                    ha='center', va='center',
+                    fontsize=11, color='#aaaacc',
+                    fontfamily='monospace', zorder=3)
+
+            # Model name
             ax.text(cx, 0.90, name,
                     ha='center', va='top',
-                    fontsize=8, fontweight='bold',
+                    fontsize=9, fontweight='bold',
                     color='#ccccdd', fontfamily='monospace')
 
-            tag_color = '#6655ff' if domain == 'Synthetic' else '#00aa88'
+            # Domain tag
+            tag_col = '#6655ff' if domain == 'Synthetic' else '#00aa88'
             ax.text(cx, 0.78, f'[{domain}]',
                     ha='center', va='top',
-                    fontsize=7, color=tag_color,
+                    fontsize=8, color=tag_col,
                     fontfamily='monospace')
+
+            # Accuracy
             ax.text(cx, 0.06, f'Accuracy: {acc}',
                     ha='center', va='bottom',
-                    fontsize=7, color='#555566',
+                    fontsize=8, color='#555566',
                     fontfamily='monospace')
+
             for s in ax.spines.values():
                 s.set_edgecolor('#222233')
                 s.set_linewidth(1.2)
 
-        gauge_axes = [ax_m1, ax_m2, ax_m3, ax_m4, ax_m5, ax_m6]
+        # Draw all gauges
         for ax, m in zip(gauge_axes, all_models):
             draw_gauge(ax, m['name'], m['domain'],
-                       m['pred'] * 100, m['color'],
+                       m['pred']*100,
                        f"{m['accuracy']*100:.2f}%")
 
-        # Ranking chart
+        plt.tight_layout()
+        buf2 = io.BytesIO()
+        plt.savefig(buf2, format='png', dpi=150,
+                    bbox_inches='tight', facecolor='#080810')
+        buf2.seek(0)
+        img_gauges = Image.open(buf2).copy()
+        plt.close()
+
+        # ── Row 3: Bar Chart + Rankings ──────────────────────
+        fig3, (ax_bar, ax_rank) = plt.subplots(
+            1, 2, figsize=(20, 6), facecolor='#080810'
+        )
+        fig3.suptitle('MODEL COMPARISON & RANKINGS',
+                      color='#e0e0ff', fontsize=13,
+                      fontfamily='monospace', fontweight='bold')
+
+        # Bar chart
+        real_pcts = [m['pred']*100 for m in all_models]
+        bar_cols  = [m['color']    for m in all_models]
+        ax_bar.set_facecolor('#0d0d1a')
+        bars = ax_bar.bar(range(6), real_pcts, color=bar_cols,
+                          width=0.6, edgecolor='#222233', linewidth=1)
+        ax_bar.axhline(50, color='#555566', linewidth=1,
+                       linestyle='--', alpha=0.7)
+        ax_bar.set_xticks(range(6))
+        ax_bar.set_xticklabels(
+            ['CNN\n(Synth)', 'R50\n(Synth)', 'VGG\n(Synth)',
+             'MNV2\n(Synth)', 'R50V2\n(Photo)', 'MNV2\n(Photo)'],
+            fontsize=9, color='#666677'
+        )
+        for bar, val in zip(bars, real_pcts):
+            ax_bar.text(bar.get_x() + bar.get_width()/2,
+                        val + 1.5, f'{val:.1f}%',
+                        ha='center', va='bottom',
+                        color='white', fontsize=9,
+                        fontfamily='monospace', fontweight='bold')
+        ax_bar.set_ylim(0, 115)
+        ax_bar.set_ylabel('P(REAL) %', color='#666677',
+                          fontsize=10, fontfamily='monospace')
+        ax_bar.set_title('ALL MODELS P(REAL)', color='#aaaacc',
+                         fontsize=10, fontfamily='monospace',
+                         fontweight='bold', pad=8)
+        ax_bar.tick_params(colors='#666677')
+        for s in ax_bar.spines.values():
+            s.set_edgecolor('#222233')
+
+        # Rankings
         ax_rank.set_facecolor('#0d0d1a')
         ax_rank.axis('off')
         ax_rank.set_xlim(0, 1)
@@ -494,61 +531,53 @@ def predict_image(image):
         ax_rank.text(0.5, 0.97,
                      'MODEL RANKINGS  (Accuracy × Confidence)',
                      ha='center', va='top',
-                     fontsize=9, fontweight='bold',
+                     fontsize=10, fontweight='bold',
                      color='#aaaacc', fontfamily='monospace')
 
-        row_h   = 0.13
-        start_y = 0.85
-
+        row_h, start_y = 0.13, 0.85
         for i, m in enumerate(ranked):
             y         = start_y - i * row_h
-            rank_col  = m['color']
-            domain_col = '#6655ff' if m['domain'] == 'Synthetic' else '#00aa88'
-
+            dom_col   = '#6655ff' if m['domain'] == 'Synthetic' else '#00aa88'
             ax_rank.text(0.02, y, f'#{i+1}',
                          ha='left', va='center',
-                         fontsize=10, fontweight='bold',
+                         fontsize=11, fontweight='bold',
                          color='#888899', fontfamily='monospace')
             ax_rank.text(0.09, y, m['name'],
                          ha='left', va='center',
-                         fontsize=8, fontweight='bold',
+                         fontsize=9, fontweight='bold',
                          color='#ccccdd', fontfamily='monospace')
             ax_rank.text(0.09, y - 0.045,
                          f"[{m['domain']}]  Acc: {m['accuracy']*100:.2f}%",
                          ha='left', va='center',
-                         fontsize=7, color=domain_col,
+                         fontsize=8, color=dom_col,
                          fontfamily='monospace')
-            ax_rank.barh(y, 0.55, left=0.32, height=0.07,
-                         color='#1a1a2e', edgecolor='#222233')
-            ax_rank.barh(y, m['rank_score'] * 0.55,
+            ax_rank.barh(y, 0.50, left=0.32,
+                         height=0.07, color='#1a1a2e',
+                         edgecolor='#222233')
+            ax_rank.barh(y, m['rank_score']*0.50,
                          left=0.32, height=0.07,
-                         color=rank_col, alpha=0.85)
-            ax_rank.text(0.89, y,
+                         color=m['color'], alpha=0.85)
+            ax_rank.text(0.84, y,
                          f"{m['emoji']} {m['label']}",
                          ha='left', va='center',
-                         fontsize=8, fontweight='bold',
+                         fontsize=9, fontweight='bold',
                          color=m['color'], fontfamily='monospace')
-            ax_rank.text(0.89, y - 0.045,
+            ax_rank.text(0.84, y - 0.045,
                          f"{m['confidence']:.1f}% conf",
                          ha='left', va='center',
-                         fontsize=7, color='#666677',
+                         fontsize=8, color='#666677',
                          fontfamily='monospace')
-            ax_rank.text(0.875, y, f'{m["rank_score"]:.3f}',
-                         ha='right', va='center',
-                         fontsize=7, color='#555566',
-                         fontfamily='monospace')
-
         for s in ax_rank.spines.values():
             s.set_edgecolor('#222233')
 
-        buf = io.BytesIO()
-        plt.savefig(buf, format='png', dpi=140,
+        plt.tight_layout()
+        buf3 = io.BytesIO()
+        plt.savefig(buf3, format='png', dpi=150,
                     bbox_inches='tight', facecolor='#080810')
-        buf.seek(0)
-        result_img = Image.open(buf).copy()
+        buf3.seek(0)
+        img_rankings = Image.open(buf3).copy()
         plt.close()
-
-        # ── Explanation from top ranked model ────────────────
+            # ── Explanation from top ranked model ────────────────
         explanation = get_explanation(
             top['is_real'],
             top['confidence'],
@@ -609,6 +638,11 @@ def predict_image(image):
 - 📷 **Photographic Domain** — trained on GRAVEX-200K (200,000 real vs AI faces)
   *Best for detecting AI-generated photographs and deepfakes*
   *Preprocessing: Direct resize to 224×224*
+### 🗺️ Reading the Heatmaps
+- 🧪 **Custom CNN heatmap** — shows suspicious regions from Synthetic domain perspective
+- 📷 **ResNet50V2 heatmap** — shows suspicious regions from Photographic domain perspective
+- **Bright/Yellow zones** — regions with highest influence on the decision
+- **Dark zones** — regions with minimal influence
 
 ---
 
@@ -639,11 +673,16 @@ def predict_image(image):
 | Input Resolution | 224×224 px |
         """
 
-        return result_img, result_text
+        return img_heatmaps, img_gauges, img_rankings, result_text
 
     except Exception as e:
         import traceback
-        return None, f"## ❌ Error\n\n**{str(e)}**\n\n```\n{traceback.format_exc()}\n```"
+        empty = Image.new('RGB', (100, 100), color='#080810')
+        return empty, empty, empty, \
+               f"## ❌ Error\n\n**{str(e)}**\n\n```\n{traceback.format_exc()}\n```"
+
+
+
 
 print("✅ Prediction function ready")
 
@@ -1028,15 +1067,22 @@ with gr.Blocks(
 
         # Right — Results
         with gr.Column(scale=2):
-            gr.HTML('<div class="sec-label">03 — Forensic Output</div>')
-
-            output_image = gr.Image(
-                label="", height=400,
+            gr.HTML('<div class="sec-label">03 — Heatmaps & Overlays</div>')
+            output_heatmaps = gr.Image(
+                label="", height=280,
                 elem_classes=["out-img"]
             )
-
-            gr.HTML('<div class="sec-label" style="margin-top:20px">04 — Full Analysis Report</div>')
-
+            gr.HTML('<div class="sec-label" style="margin-top:14px">04 — Model Gauges</div>')
+            output_gauges = gr.Image(
+                label="", height=260,
+                elem_classes=["out-img"]
+            )
+            gr.HTML('<div class="sec-label" style="margin-top:14px">05 — Rankings & Comparison</div>')
+            output_rankings = gr.Image(
+                label="", height=300,
+                elem_classes=["out-img"]
+            )
+            gr.HTML('<div class="sec-label" style="margin-top:20px">06 — Full Analysis Report</div>')
             output_text = gr.Markdown(
                 value="""
 ## 🔬 Awaiting Input
@@ -1089,7 +1135,7 @@ Final interpretation is always left to the user.
                 <div class="step-icon">🗺️</div>
                 <div class="step-num">Step 04</div>
                 <div class="step-title">Heatmap</div>
-                <div class="step-desc">Gradient saliency from Custom CNN — shows exact focus regions</div>
+                <div class="step-desc">Gradient saliency from Custom CNN and ResNet50V2 — shows exact focus regions</div>
             </div>
             <div class="step-card">
                 <div class="step-icon">🏆</div>
@@ -1123,7 +1169,8 @@ Final interpretation is always left to the user.
     detect_btn.click(
         fn=predict_image,
         inputs=input_image,
-        outputs=[output_image, output_text]
+        outputs=[output_heatmaps, output_gauges,
+                 output_rankings, output_text]
     )
 
 print("✅ Professional app built successfully")
