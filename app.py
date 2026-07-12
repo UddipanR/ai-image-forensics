@@ -1,5 +1,5 @@
 """
-Forensica — Neo-Brutalist Gradio single-file app.
+Forensica - Neo-Brutalist Gradio single-file app.
 
 Loud, colourful, high-contrast neo-brutalism UI:
   • Chunky black borders, hard drop-shadows, tile-based layout
@@ -275,8 +275,8 @@ def run_analysis(image: Image.Image):
   <ul class="nb-signals">
     <li>▸ <b>{real_votes} of 6</b> models judge REAL; <b>{fake_votes}</b> judge AI-generated.</li>
     <li>▸ Mean confidence across the panel: <b>{avg_conf:.1f}%</b>.</li>
-    <li>▸ Strongest signal — <b>{top['name']}</b> ({top['domain']}) at <b>{top['conf']:.1f}%</b>.</li>
-    <li>▸ Weakest signal — <b>{ranked[-1]['name']}</b> at <b>{ranked[-1]['conf']:.1f}%</b>.</li>
+    <li>▸ Strongest signal - <b>{top['name']}</b> ({top['domain']}) at <b>{top['conf']:.1f}%</b>.</li>
+    <li>▸ Weakest signal - <b>{ranked[-1]['name']}</b> at <b>{ranked[-1]['conf']:.1f}%</b>.</li>
   </ul>
 </div>
 """
@@ -306,22 +306,22 @@ def run_analysis(image: Image.Image):
 <div class="nb-card nb-card--tech">
   <span class="nb-tag nb-tag--black">TECHNICAL &amp; DISCLAIMER</span>
   <ul class="nb-signals">
-    <li>▸ <b>Synthetic domain</b> — CIFAKE-style preprocessing: 32×32 downscale then 224×224 upscale. Trained to catch low-resolution generative artefacts.</li>
-    <li>▸ <b>Photographic domain</b> — direct 224×224 resize. Trained on real-world photos vs. modern high-resolution generative imagery (GRAVEX-200K).</li>
-    <li>▸ <b>Heatmaps</b> — gradient saliency from two independent models: Custom CNN (Synthetic) and ResNet50V2 (Photographic). Bright/yellow zones = highest influence.</li>
-    <li>▸ <b>Ranking</b> — score = accuracy × |pred − 0.5| × 2. Measures reliability; never issues a single verdict.</li>
-    <li>▸ <b>Disclaimer</b> — evidence, not judgment. Research use only, not for legal use. Heavily filtered or re-photographed images may produce unreliable results.</li>
+    <li>▸ <b>Synthetic domain</b> - CIFAKE-style preprocessing: 32×32 downscale then 224×224 upscale. Trained to catch low-resolution generative artefacts.</li>
+    <li>▸ <b>Photographic domain</b> - direct 224×224 resize. Trained on real-world photos vs. modern high-resolution generative imagery (GRAVEX-200K).</li>
+    <li>▸ <b>Heatmaps</b> - gradient saliency from two independent models: Custom CNN (Synthetic) and ResNet50V2 (Photographic). Bright/yellow zones = highest influence.</li>
+    <li>▸ <b>Ranking</b> - score = accuracy × |pred − 0.5| × 2. Measures reliability; never issues a single verdict.</li>
+    <li>▸ <b>Disclaimer</b> - evidence, not judgment. Research use only, not for legal use. Heavily filtered or re-photographed images may produce unreliable results.</li>
   </ul>
   <div class="nb-table-wrap">
     <table class="nb-table">
       <thead><tr><th>FIELD</th><th>VALUE</th></tr></thead>
       <tbody>
         <tr><td>Total models</td><td class="nb-mono">6 (4 Synthetic + 2 Photographic)</td></tr>
-        <tr><td>Synthetic dataset</td><td class="nb-mono">CIFAKE — 120,000 images</td></tr>
-        <tr><td>Photographic dataset</td><td class="nb-mono">GRAVEX-200K — 200,000 images</td></tr>
+        <tr><td>Synthetic dataset</td><td class="nb-mono">CIFAKE - 120,000 images</td></tr>
+        <tr><td>Photographic dataset</td><td class="nb-mono">GRAVEX-200K - 200,000 images</td></tr>
         <tr><td>Total training images</td><td class="nb-mono">320,000</td></tr>
-        <tr><td>Best accuracy</td><td class="nb-mono">ResNet50V2 — 96.17%</td></tr>
-        <tr><td>Best AUC-ROC</td><td class="nb-mono">ResNet50V2 — 99.48%</td></tr>
+        <tr><td>Best accuracy</td><td class="nb-mono">ResNet50V2 - 96.17%</td></tr>
+        <tr><td>Best AUC-ROC</td><td class="nb-mono">ResNet50V2 - 99.48%</td></tr>
         <tr><td>Synthetic preprocessing</td><td class="nb-mono">32×32 → 224×224 upscale</td></tr>
         <tr><td>Photographic preprocessing</td><td class="nb-mono">Direct 224×224 resize</td></tr>
         <tr><td>Ranking method</td><td class="nb-mono">Accuracy × Confidence Strength</td></tr>
@@ -513,12 +513,13 @@ body, .gradio-container {
 .nb-gauge-meta { display: flex; justify-content: space-between; margin-top: 10px; }
 
 /* ─── Tables ─── */
-.nb-table-wrap { overflow-x: auto; border: 3px solid var(--ink); background:#fff; }
-.nb-table { width: 100%; border-collapse: collapse; font-family: var(--body); }
+.nb-table-wrap { overflow-x: auto; border: 3px solid var(--ink); background:#fff !important; }
+.nb-table { width: 100%; border-collapse: collapse; font-family: var(--body); background:#fff !important; }
 .nb-table th, .nb-table td {
   padding: 10px 12px; border-bottom: 2px solid var(--ink); text-align: left;
-  font-size: 14px; color: var(--ink);
+  font-size: 14px; color: var(--ink) !important; background: #fff !important;
 }
+.nb-table td * { color: var(--ink) !important; background: transparent !important; }
 .nb-table th {
   background: var(--ink); color: var(--paper);
   font-family: var(--mono); font-size: 11px; letter-spacing: .18em;
@@ -546,10 +547,13 @@ body, .gradio-container {
 
 .nb-signals { list-style: none; padding: 0; margin: 8px 0 0; }
 .nb-signals li {
-  padding: 10px 12px; margin: 8px 0; background: #fff;
+  padding: 10px 12px; margin: 8px 0;
+  background: var(--ink) !important; color: var(--yellow) !important;
   border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink);
-  font-size: 15px; font-weight: 500;
+  font-size: 15px; font-weight: 600;
 }
+.nb-signals li * { color: var(--yellow) !important; background: transparent !important; }
+.nb-signals li b, .nb-signals li strong { color: #fff !important; }
 
 /* ─── Specimen panel ─── */
 .nb-specimen-head {
@@ -732,7 +736,7 @@ footer.svelte-1rjryqp, footer.svelte-gpiuxh, .footer,
 # ────────────────────────────────────────────────────────────
 # 5. Gradio UI
 # ────────────────────────────────────────────────────────────
-with gr.Blocks(css=CSS, title="Forensica — AI Image Forensics") as demo:
+with gr.Blocks(css=CSS, title="Forensica - AI Image Forensics") as demo:
 
     gr.HTML("""
     <div class="nb-masthead">
@@ -743,9 +747,10 @@ with gr.Blocks(css=CSS, title="Forensica — AI Image Forensics") as demo:
 
     <section class="nb-hero">
       <span class="nb-sticker">NEW! 6 MODELS</span>
-      <div class="nb-eyebrow">№ 001 — FORENSIC ANALYSIS SYSTEM</div>
+      <div class="nb-eyebrow">№ 001 - FORENSIC ANALYSIS SYSTEM</div>
       <h1>The image,<br/><em>interrogated.</em></h1>
-      <p>Six deep-learning models across two domains examine any image side by side —
+      <p>Forensica detects the <b>probability of an image being AI-generated or Real</b>.
+         Six deep-learning models across two domains examine any image side by side,
          publishing not a verdict but the <b>evidence</b>, ranked by reliability.
          Interpretation is left to you, the reader.</p>
       <div class="nb-hero-chips">
@@ -759,7 +764,7 @@ with gr.Blocks(css=CSS, title="Forensica — AI Image Forensics") as demo:
     """)
 
     with gr.Row(equal_height=False):
-        # LEFT — Specimen
+        # LEFT - Specimen
         with gr.Column(scale=4, min_width=280):
             gr.HTML("""
             <div class="nb-specimen-head">
@@ -774,7 +779,7 @@ with gr.Blocks(css=CSS, title="Forensica — AI Image Forensics") as demo:
                 clear_btn = gr.Button("✕ CLEAR", variant="secondary")
             gr.HTML('<p class="nb-caption">ACCEPTED · JPG · PNG · WEBP · BMP · TIFF</p>')
 
-        # RIGHT — Report
+        # RIGHT - Report
         with gr.Column(scale=8, min_width=320):
             verdict = gr.HTML(IDLE_VERDICT)
 
@@ -820,8 +825,8 @@ with gr.Blocks(css=CSS, title="Forensica — AI Image Forensics") as demo:
     gr.HTML("""
     <div class="nb-footer">
       <div><span class="brand">FORENSICA</span> · BUILT BY TEAM N:U:N</div>
-      <div>SYNTHETIC — CNN 95.62% · RESNET50 81.67% · VGG16 87.76% · MOBILENETV2 87.07%</div>
-      <div>PHOTOGRAPHIC — RESNET50V2 96.17% · MOBILENETV2 89.40%</div>
+      <div>SYNTHETIC - CNN 95.62% · RESNET50 81.67% · VGG16 87.76% · MOBILENETV2 87.07%</div>
+      <div>PHOTOGRAPHIC - RESNET50V2 96.17% · MOBILENETV2 89.40%</div>
       <div>320K TRAINING IMAGES · 2 DOMAINS · EVIDENCE, NOT JUDGMENT.</div>
     </div>
     """)
